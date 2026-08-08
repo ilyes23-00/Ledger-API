@@ -1,6 +1,8 @@
 import { createApp } from './app.js';
 import { loadEnvironment } from './config/env.js';
+import { insertAccount } from './db/index.js';
 import { createDatabaseConnection } from './db/pool.js';
+import { createAccountWithDatabase } from './services/create-account.js';
 
 const bootstrap = async (): Promise<void> => {
   const environment = loadEnvironment();
@@ -10,6 +12,7 @@ const bootstrap = async (): Promise<void> => {
     logger: environment.nodeEnv !== 'test',
     dependencies: {
       checkDatabaseHealth: database.checkHealth,
+      createAccount: createAccountWithDatabase(insertAccount, database.pool),
       closeResources: database.close,
     },
   });
