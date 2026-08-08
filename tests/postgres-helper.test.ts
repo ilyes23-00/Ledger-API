@@ -45,7 +45,10 @@ describe('schema test database safety guard', () => {
   });
 
   it('rejects missing, empty, and malformed database urls before destructive work', () => {
+    const originalValue = process.env[SCHEMA_TEST_DATABASE_URL_ENV];
+
     vi.unstubAllEnvs();
+    delete process.env[SCHEMA_TEST_DATABASE_URL_ENV];
     expect(() => getSchemaTestDatabaseUrl()).toThrow(/is required/i);
 
     vi.stubEnv(SCHEMA_TEST_DATABASE_URL_ENV, '   ');
@@ -57,5 +60,12 @@ describe('schema test database safety guard', () => {
     expect(() =>
       parseSchemaTestDatabaseName('postgresql://ledger:secret@127.0.0.1'),
     ).toThrow(/must include a non-empty database name/i);
+
+    if (originalValue === undefined) {
+      delete process.env[SCHEMA_TEST_DATABASE_URL_ENV];
+      return;
+    }
+
+    process.env[SCHEMA_TEST_DATABASE_URL_ENV] = originalValue;
   });
 });

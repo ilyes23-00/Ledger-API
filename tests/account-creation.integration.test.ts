@@ -3,9 +3,10 @@ import { beforeAll, afterAll, describe, expect, it } from 'vitest';
 import { Pool } from 'pg';
 
 import { createApp } from '../src/app.js';
-import { insertAccount } from '../src/db/index.js';
+import { findAccountById, insertAccount } from '../src/db/index.js';
 import { runMigrations } from '../src/scripts/migrate.js';
 import { createAccountWithDatabase } from '../src/services/create-account.js';
+import { getAccountBalanceWithDatabase } from '../src/services/get-account-balance.js';
 import { createClient, getSchemaTestDatabaseUrl } from './helpers/postgres.js';
 import type { CreateAccountResult } from '../src/services/create-account.js';
 
@@ -38,6 +39,10 @@ describe.skipIf(testDatabaseUrl === undefined || testDatabaseUrl.trim() === '')(
         dependencies: {
           checkDatabaseHealth: () => Promise.resolve({ reachable: true }),
           createAccount: createAccountWithDatabase(insertAccount, pool),
+          getAccountBalance: getAccountBalanceWithDatabase(
+            findAccountById,
+            pool,
+          ),
         },
       });
       const client = createClient(getSchemaTestDatabaseUrl());
@@ -106,6 +111,10 @@ describe.skipIf(testDatabaseUrl === undefined || testDatabaseUrl.trim() === '')(
         dependencies: {
           checkDatabaseHealth: () => Promise.resolve({ reachable: true }),
           createAccount: createAccountWithDatabase(insertAccount, pool),
+          getAccountBalance: getAccountBalanceWithDatabase(
+            findAccountById,
+            pool,
+          ),
         },
       });
       const client = createClient(getSchemaTestDatabaseUrl());

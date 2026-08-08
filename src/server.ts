@@ -1,8 +1,9 @@
 import { createApp } from './app.js';
 import { loadEnvironment } from './config/env.js';
-import { insertAccount } from './db/index.js';
+import { findAccountById, insertAccount } from './db/index.js';
 import { createDatabaseConnection } from './db/pool.js';
 import { createAccountWithDatabase } from './services/create-account.js';
+import { getAccountBalanceWithDatabase } from './services/get-account-balance.js';
 
 const bootstrap = async (): Promise<void> => {
   const environment = loadEnvironment();
@@ -13,6 +14,10 @@ const bootstrap = async (): Promise<void> => {
     dependencies: {
       checkDatabaseHealth: database.checkHealth,
       createAccount: createAccountWithDatabase(insertAccount, database.pool),
+      getAccountBalance: getAccountBalanceWithDatabase(
+        findAccountById,
+        database.pool,
+      ),
       closeResources: database.close,
     },
   });

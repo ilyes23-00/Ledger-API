@@ -175,7 +175,9 @@ const mapValidationErrorCode = (
     if (
       validationError.keyword === 'format' ||
       (validationError.keyword === 'pattern' &&
-        validationError.instancePath.endsWith('/accountId'))
+        (validationError.instancePath.endsWith('/accountId') ||
+          validationError.schemaPath.includes('accountId') ||
+          validationError.instancePath === ''))
     ) {
       return 'MALFORMED_UUID';
     }
