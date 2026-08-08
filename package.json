@@ -1,0 +1,50 @@
+{
+  "name": "chekin",
+  "version": "1.0.0",
+  "description": "Backend-only transaction ledger API focused on correctness-critical account balances and transfers.",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "node --watch --env-file-if-exists=.env --import tsx src/server.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "migrate": "node --env-file-if-exists=.env --import tsx src/scripts/migrate.ts",
+    "start": "node --env-file-if-exists=.env dist/server.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "keywords": [
+    "backend",
+    "ledger",
+    "fastify",
+    "postgresql",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "private": true,
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.1.2",
+    "@types/pg": "^8.21.0",
+    "eslint": "^10.8.0",
+    "globals": "^17.9.0",
+    "prettier": "^3.9.6",
+    "tsx": "^4.23.10",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.66.0",
+    "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.52",
+    "fastify": "^5.11.3",
+    "pg": "^8.22.0"
+  }
+}
