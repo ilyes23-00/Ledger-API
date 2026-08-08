@@ -25,6 +25,10 @@ export const createDatabaseConnection = (
     min: databaseConfig.poolMin,
     idleTimeoutMillis: databaseConfig.idleTimeoutMs,
     connectionTimeoutMillis: databaseConfig.connectionTimeoutMs,
+    statement_timeout: databaseConfig.statementTimeoutMs,
+    lock_timeout: databaseConfig.lockTimeoutMs,
+    idle_in_transaction_session_timeout:
+      databaseConfig.idleInTransactionSessionTimeoutMs,
     allowExitOnIdle: false,
   });
 

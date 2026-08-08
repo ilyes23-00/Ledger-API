@@ -19,6 +19,7 @@ import {
   AccountTransactionHistoryResponseSchema,
   CreateAccountRequestSchema,
   CreateAccountResponseSchema,
+  EmptyQuerystringSchema,
   createAccountRouteContract,
   createTransferRouteContract,
   getAccountBalanceRouteContract,
@@ -85,6 +86,7 @@ export const contractComponentSchemas = {
   AccountBalanceResponse: AccountBalanceResponseSchema,
   AccountTransactionHistoryResponse: AccountTransactionHistoryResponseSchema,
   AccountIdParams: AccountIdParamsSchema,
+  EmptyQuerystring: EmptyQuerystringSchema,
   TransferHeaders: TransferHeadersSchema,
 } as const;
 

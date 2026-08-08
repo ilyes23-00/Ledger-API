@@ -3,10 +3,15 @@ import { beforeAll, afterAll, describe, expect, it } from 'vitest';
 import { Pool } from 'pg';
 
 import { createApp } from '../src/app.js';
-import { findAccountById, insertAccount } from '../src/db/index.js';
+import {
+  findAccountById,
+  insertAccount,
+  listAccountTransactions,
+} from '../src/db/index.js';
 import { runMigrations } from '../src/scripts/migrate.js';
 import { createAccountWithDatabase } from '../src/services/create-account.js';
 import { getAccountBalanceWithDatabase } from '../src/services/get-account-balance.js';
+import { getAccountTransactionsWithDatabase } from '../src/services/get-account-transactions.js';
 import { createClient, getSchemaTestDatabaseUrl } from './helpers/postgres.js';
 import type { CreateAccountResult } from '../src/services/create-account.js';
 
@@ -41,6 +46,11 @@ describe.skipIf(testDatabaseUrl === undefined || testDatabaseUrl.trim() === '')(
           createAccount: createAccountWithDatabase(insertAccount, pool),
           getAccountBalance: getAccountBalanceWithDatabase(
             findAccountById,
+            pool,
+          ),
+          getAccountTransactions: getAccountTransactionsWithDatabase(
+            findAccountById,
+            listAccountTransactions,
             pool,
           ),
         },
@@ -113,6 +123,11 @@ describe.skipIf(testDatabaseUrl === undefined || testDatabaseUrl.trim() === '')(
           createAccount: createAccountWithDatabase(insertAccount, pool),
           getAccountBalance: getAccountBalanceWithDatabase(
             findAccountById,
+            pool,
+          ),
+          getAccountTransactions: getAccountTransactionsWithDatabase(
+            findAccountById,
+            listAccountTransactions,
             pool,
           ),
         },

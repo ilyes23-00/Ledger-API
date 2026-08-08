@@ -62,9 +62,15 @@ describe.skipIf(
       migrationsDirectory: migrationDirectory,
     });
 
-    expect(firstRun.appliedMigrations).toEqual(['0001_initial_schema.sql']);
+    expect(firstRun.appliedMigrations).toEqual([
+      '0001_initial_schema.sql',
+      '0002_defer_transfer_account_foreign_keys.sql',
+    ]);
     expect(secondRun.appliedMigrations).toEqual([]);
-    expect(secondRun.skippedMigrations).toEqual(['0001_initial_schema.sql']);
+    expect(secondRun.skippedMigrations).toEqual([
+      '0001_initial_schema.sql',
+      '0002_defer_transfer_account_foreign_keys.sql',
+    ]);
   });
 
   it('creates the required tables, columns, constraints, foreign keys, indexes, and migration history', async () => {
@@ -227,8 +233,11 @@ describe.skipIf(
          FROM schema_migrations
          ORDER BY id`,
         );
-      expect(appliedMigrations).toHaveLength(1);
+      expect(appliedMigrations).toHaveLength(2);
       expect(appliedMigrations[0]?.id).toBe('0001_initial_schema.sql');
+      expect(appliedMigrations[1]?.id).toBe(
+        '0002_defer_transfer_account_foreign_keys.sql',
+      );
       expect(appliedMigrations[0]?.checksum).toMatch(/^[0-9a-f]{64}$/);
     } finally {
       await client.end();

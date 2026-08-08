@@ -1,0 +1,77 @@
+name: ledger-assignment
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ledger
+      POSTGRES_USER: ledger
+      POSTGRES_PASSWORD: ledger
+    volumes:
+      # postgres:18 stores data under /var/lib/postgresql/18/docker inside the
+      # image, so the named volume must mount at /var/lib/postgresql.
+      - ledger-pg-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ledger -d ledger']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: 'no'
+    environment: &app-environment
+      NODE_ENV: production
+      APP_HOST: 0.0.0.0
+      APP_PORT: 3000
+      APP_CONNECTION_TIMEOUT_MS: 5000
+      APP_REQUEST_TIMEOUT_MS: 10000
+      APP_HANDLER_TIMEOUT_MS: 15000
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ledger
+      DATABASE_USER: ledger
+      DATABASE_PASSWORD: ledger
+      DATABASE_POOL_MAX: 10
+      DATABASE_POOL_MIN: 0
+      DATABASE_POOL_IDLE_TIMEOUT_MS: 30000
+      DATABASE_POOL_CONNECTION_TIMEOUT_MS: 5000
+      DATABASE_STATEMENT_TIMEOUT_MS: 15000
+      DATABASE_LOCK_TIMEOUT_MS: 5000
+      DATABASE_IDLE_IN_TRANSACTION_SESSION_TIMEOUT_MS: 10000
+    command: ['node', 'dist/scripts/migrate.js']
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment: *app-environment
+    ports:
+      - '3000:3000'
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/health').then(r => process.exit(r.status === 200 ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  ledger-pg-data:
+    name: ledger-pg-data

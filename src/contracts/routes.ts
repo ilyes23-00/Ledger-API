@@ -41,6 +41,7 @@ export type RouteContract = {
   tags: string[];
   headers?: TSchema;
   params?: TSchema;
+  querystring?: TSchema;
   body?: TSchema;
   success: OperationResponseDefinition;
   errors: OperationResponseDefinition[];
@@ -160,9 +161,18 @@ export const TransferHeadersSchema = Type.Object(
     'idempotency-key': IdempotencyKeySchema,
   },
   {
-    additionalProperties: false,
+    additionalProperties: true,
     description:
       'Required idempotency header. Header names are case-insensitive on the wire; this schema uses the normalized lowercase name.',
+  },
+);
+
+export const EmptyQuerystringSchema = Type.Object(
+  {},
+  {
+    additionalProperties: false,
+    description:
+      'This endpoint does not accept query parameters. Unexpected query parameters are rejected.',
   },
 );
 
@@ -248,6 +258,16 @@ const notFoundErrors = createErrorResponseDefinition(
   ],
 );
 
+const payloadTooLargeErrors = createErrorResponseDefinition(
+  'Payload Too Large. Returned when the JSON request body exceeds the application body-size limit.',
+  [
+    {
+      code: 'PAYLOAD_TOO_LARGE',
+      message: 'Request body exceeds the maximum allowed size.',
+    },
+  ],
+);
+
 const conflictErrors = createErrorResponseDefinition(
   'Conflict. Returned when the request conflicts with current resource state, including conflicting idempotency-key reuse or account currency mismatch.',
   [
@@ -273,6 +293,17 @@ const insufficientFundsErrors = createErrorResponseDefinition(
   ],
 );
 
+const balanceLimitExceededErrors = createErrorResponseDefinition(
+  'Unprocessable Content. Returned when the destination account balance would exceed the maximum supported BIGINT value.',
+  [
+    {
+      code: 'BALANCE_LIMIT_EXCEEDED',
+      message:
+        'Destination account balance would exceed the maximum supported value.',
+    },
+  ],
+);
+
 const internalServerErrors = createErrorResponseDefinition(
   'Internal Server Error. Returned for unexpected failures. Responses never include stack traces, SQL, credentials, internal paths, or database details.',
   [
@@ -291,10 +322,12 @@ export const createAccountRouteContract: RouteContract = {
   description:
     'Creates an account with the explicit USD currency and a non-negative opening balance in minor units. Account creation is the trusted opening-funding boundary.',
   tags: ['Accounts'],
+  querystring: EmptyQuerystringSchema,
   body: CreateAccountRequestSchema,
   success: createSuccess(201, 'Account created.', CreateAccountResponseSchema),
   errors: [
     createError(400, badRequestErrors),
+    createError(413, payloadTooLargeErrors),
     createError(500, internalServerErrors),
   ],
 };
@@ -308,6 +341,7 @@ export const createTransferRouteContract: RouteContract = {
     'Creates a completed USD transfer. Money conservation for transfers is measured immediately before and after each completed transfer. Exact idempotent replays return the original 201 response body.',
   tags: ['Transfers'],
   headers: TransferHeadersSchema,
+  querystring: EmptyQuerystringSchema,
   body: TransferRequestSchema,
   success: createSuccess(
     201,
@@ -316,9 +350,11 @@ export const createTransferRouteContract: RouteContract = {
   ),
   errors: [
     createError(400, badRequestErrors),
+    createError(413, payloadTooLargeErrors),
     createError(404, notFoundErrors),
     createError(409, conflictErrors),
     createError(422, insufficientFundsErrors),
+    createError(422, balanceLimitExceededErrors),
     createError(500, internalServerErrors),
   ],
 };
@@ -331,6 +367,7 @@ export const getAccountBalanceRouteContract: RouteContract = {
   description: 'Returns the current balance and currency for an account.',
   tags: ['Accounts'],
   params: AccountIdParamsSchema,
+  querystring: EmptyQuerystringSchema,
   success: createSuccess(
     200,
     'Account balance retrieved.',
@@ -352,6 +389,7 @@ export const getAccountTransactionsRouteContract: RouteContract = {
     'Returns completed transfers for the account ordered by createdAt descending, then transferId descending.',
   tags: ['Accounts'],
   params: AccountIdParamsSchema,
+  querystring: EmptyQuerystringSchema,
   success: createSuccess(
     200,
     'Account transaction history retrieved.',
@@ -378,6 +416,7 @@ export const errorStatusByCode: Record<ErrorCode, number> = {
   MALFORMED_UUID: 400,
   MISSING_IDEMPOTENCY_KEY: 400,
   INVALID_IDEMPOTENCY_KEY: 400,
+  PAYLOAD_TOO_LARGE: 413,
   INVALID_CURRENCY: 400,
   ZERO_AMOUNT: 400,
   NEGATIVE_AMOUNT: 400,
@@ -387,6 +426,7 @@ export const errorStatusByCode: Record<ErrorCode, number> = {
   UNKNOWN_ACCOUNT: 404,
   CURRENCY_MISMATCH: 409,
   INSUFFICIENT_FUNDS: 422,
+  BALANCE_LIMIT_EXCEEDED: 422,
   IDEMPOTENCY_CONFLICT: 409,
   INTERNAL_ERROR: 500,
 };

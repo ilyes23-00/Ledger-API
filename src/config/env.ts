@@ -5,6 +5,9 @@ export type AppEnvironment = {
   server: {
     host: string;
     port: number;
+    connectionTimeoutMs: number;
+    requestTimeoutMs: number;
+    handlerTimeoutMs: number;
   };
   database: {
     host: string;
@@ -16,6 +19,9 @@ export type AppEnvironment = {
     poolMin: number;
     idleTimeoutMs: number;
     connectionTimeoutMs: number;
+    statementTimeoutMs: number;
+    lockTimeoutMs: number;
+    idleInTransactionSessionTimeoutMs: number;
   };
 };
 
@@ -59,6 +65,33 @@ export const loadEnvironment = (
     {
       min: 1,
       max: 65_535,
+    },
+  );
+  const requestTimeoutMs = readInteger(
+    source['APP_REQUEST_TIMEOUT_MS'] ?? '10000',
+    'APP_REQUEST_TIMEOUT_MS',
+    issues,
+    {
+      min: 1_000,
+      max: 120_000,
+    },
+  );
+  const appConnectionTimeoutMs = readInteger(
+    source['APP_CONNECTION_TIMEOUT_MS'] ?? '5000',
+    'APP_CONNECTION_TIMEOUT_MS',
+    issues,
+    {
+      min: 1_000,
+      max: 120_000,
+    },
+  );
+  const handlerTimeoutMs = readInteger(
+    source['APP_HANDLER_TIMEOUT_MS'] ?? '15000',
+    'APP_HANDLER_TIMEOUT_MS',
+    issues,
+    {
+      min: 1_000,
+      max: 120_000,
     },
   );
 
@@ -118,7 +151,7 @@ export const loadEnvironment = (
       max: 300_000,
     },
   );
-  const connectionTimeoutMs = readInteger(
+  const poolConnectionTimeoutMs = readInteger(
     source['DATABASE_POOL_CONNECTION_TIMEOUT_MS'] ?? '5000',
     'DATABASE_POOL_CONNECTION_TIMEOUT_MS',
     issues,
@@ -127,10 +160,43 @@ export const loadEnvironment = (
       max: 60_000,
     },
   );
+  const statementTimeoutMs = readInteger(
+    source['DATABASE_STATEMENT_TIMEOUT_MS'] ?? '15000',
+    'DATABASE_STATEMENT_TIMEOUT_MS',
+    issues,
+    {
+      min: 500,
+      max: 120_000,
+    },
+  );
+  const lockTimeoutMs = readInteger(
+    source['DATABASE_LOCK_TIMEOUT_MS'] ?? '5000',
+    'DATABASE_LOCK_TIMEOUT_MS',
+    issues,
+    {
+      min: 500,
+      max: 120_000,
+    },
+  );
+  const idleInTransactionSessionTimeoutMs = readInteger(
+    source['DATABASE_IDLE_IN_TRANSACTION_SESSION_TIMEOUT_MS'] ?? '10000',
+    'DATABASE_IDLE_IN_TRANSACTION_SESSION_TIMEOUT_MS',
+    issues,
+    {
+      min: 500,
+      max: 120_000,
+    },
+  );
 
   if (poolMin > poolMax) {
     issues.push(
       'DATABASE_POOL_MIN must be less than or equal to DATABASE_POOL_MAX',
+    );
+  }
+
+  if (lockTimeoutMs >= statementTimeoutMs) {
+    issues.push(
+      'DATABASE_LOCK_TIMEOUT_MS must be less than DATABASE_STATEMENT_TIMEOUT_MS',
     );
   }
 
@@ -143,6 +209,9 @@ export const loadEnvironment = (
     server: {
       host: appHost,
       port: appPort,
+      connectionTimeoutMs: appConnectionTimeoutMs,
+      requestTimeoutMs,
+      handlerTimeoutMs,
     },
     database: {
       host: databaseHost,
@@ -153,7 +222,10 @@ export const loadEnvironment = (
       poolMax,
       poolMin,
       idleTimeoutMs,
-      connectionTimeoutMs,
+      connectionTimeoutMs: poolConnectionTimeoutMs,
+      statementTimeoutMs,
+      lockTimeoutMs,
+      idleInTransactionSessionTimeoutMs,
     },
   };
 };

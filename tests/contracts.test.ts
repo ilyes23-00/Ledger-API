@@ -314,6 +314,19 @@ describe('section 2 contract schemas', () => {
         (parameter) => parameter.name === 'idempotency-key',
       ),
     ).toBe(true);
+    expect(createAccountOperation?.responses['413']).toBeDefined();
+    expect(createTransferOperation?.responses['413']).toBeDefined();
+    expect(
+      createAccountOperation?.responses['413']?.content['application/json']
+        .schema,
+    ).toEqual(document.components.schemas.ErrorResponse);
+    expect(
+      createTransferOperation?.responses['413']?.content['application/json']
+        .examples?.['PAYLOAD_TOO_LARGE']?.value,
+    ).toMatchObject({
+      code: 'PAYLOAD_TOO_LARGE',
+      message: 'Request body exceeds the maximum allowed size.',
+    });
     expect(createTransferOperation?.responses['201']).toBeDefined();
     expect(createTransferOperation?.responses['409']).toBeDefined();
     expect(getBalanceOperation?.responses['200']).toBeDefined();

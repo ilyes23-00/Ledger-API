@@ -1,5 +1,7 @@
 AGENTS.md
 README.md
+Dockerfile
+.dockerignore
 coverage
 dist
 node_modules

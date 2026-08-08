@@ -4,10 +4,15 @@ import { Pool } from 'pg';
 
 import { createApp } from '../src/app.js';
 import { MAX_MINOR_UNITS } from '../src/contracts/index.js';
-import { findAccountById, insertAccount } from '../src/db/index.js';
+import {
+  findAccountById,
+  insertAccount,
+  listAccountTransactions,
+} from '../src/db/index.js';
 import { runMigrations } from '../src/scripts/migrate.js';
 import { createAccountWithDatabase } from '../src/services/create-account.js';
 import { getAccountBalanceWithDatabase } from '../src/services/get-account-balance.js';
+import { getAccountTransactionsWithDatabase } from '../src/services/get-account-transactions.js';
 import { createClient, getSchemaTestDatabaseUrl } from './helpers/postgres.js';
 
 const migrationDirectory = path.resolve('src/db/migrations');
@@ -45,6 +50,11 @@ describe.skipIf(testDatabaseUrl === undefined || testDatabaseUrl.trim() === '')(
               lookupCount += 1;
               return findAccountById(queryable, accountId);
             },
+            pool,
+          ),
+          getAccountTransactions: getAccountTransactionsWithDatabase(
+            findAccountById,
+            listAccountTransactions,
             pool,
           ),
         },
@@ -188,6 +198,11 @@ describe.skipIf(testDatabaseUrl === undefined || testDatabaseUrl.trim() === '')(
             findAccountById,
             pool,
           ),
+          getAccountTransactions: getAccountTransactionsWithDatabase(
+            findAccountById,
+            listAccountTransactions,
+            pool,
+          ),
         },
       });
       const client = createClient(getSchemaTestDatabaseUrl());
@@ -249,6 +264,11 @@ describe.skipIf(testDatabaseUrl === undefined || testDatabaseUrl.trim() === '')(
               lookupCount += 1;
               return findAccountById(queryable, accountId);
             },
+            pool,
+          ),
+          getAccountTransactions: getAccountTransactionsWithDatabase(
+            findAccountById,
+            listAccountTransactions,
             pool,
           ),
         },
